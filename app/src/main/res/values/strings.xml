@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">name card exchange</string>
+    <string name="business_card">Business Card</string>
+    <string name="number">Number</string>
+    <string name="name">Name</string>
+    <string name="e_mail">E-mail</string>
+    <string name="ok">OK</string>
+    <string name="company">Company</string>
+    <string name="position">Position</string>
+    <string name="other">Other</string>
+</resources>
