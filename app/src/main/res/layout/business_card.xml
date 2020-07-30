@@ -1,0 +1,82 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp"
+    android:paddingTop="0dp"
+    android:paddingBottom="0dp" tools:context=".MainActivity"
+    android:background="@drawable/card">
+
+    <TextView
+        android:id="@+id/company"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:paddingStart="30dp"
+        android:paddingTop="10dp"
+        android:typeface="serif"
+        android:textSize="15sp"
+        android:textColor="#F4A460"
+
+        android:text="NTHU"
+        tools:ignore="RtlSymmetry" />
+
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:paddingStart="30dp"
+        android:layout_centerVertical="true"
+        android:typeface="serif"
+        android:textSize="17sp"
+        android:textColor="#000000"
+
+
+        android:text="Yi-Chien, Chen"
+        tools:ignore="RtlSymmetry" />
+
+    <TextView
+        android:id="@+id/position"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:paddingStart="30dp"
+        android:paddingTop="35dp"
+        android:layout_centerVertical="true"
+        android:typeface="serif"
+        android:textSize="12sp"
+        android:textColor="#8A8A8A"
+
+
+        android:text="Student"
+        tools:ignore="RtlSymmetry" />
+
+    <TextView
+        android:id="@+id/other"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:paddingStart="170dp"
+        android:layout_centerVertical="true"
+        android:typeface="serif"
+        android:textSize="8sp"
+        android:textColor="#000000"
+
+
+        android:text="Phone: 0956883866\ne-mail: yichien1996@gmail.com\nOther: This is a test"
+        tools:ignore="RtlSymmetry" />
+
+    <ImageButton
+        android:id="@+id/deletee"
+        android:background="@null"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:layout_alignParentEnd="true"
+        app:srcCompat="@drawable/delete"
+        android:contentDescription="TODO" />
+
+
+</RelativeLayout>

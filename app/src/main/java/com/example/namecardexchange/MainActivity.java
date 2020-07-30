@@ -1,6 +1,7 @@
 package com.example.namecardexchange;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -26,17 +27,20 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.TreeMap;
 
@@ -55,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static String card;
 
-    static boolean version = false;  //true: 4.0 , false:5.0
+    static boolean version = true;  //true: 4.0 , false:5.0
 
     static byte[] id_byte = new byte[4];
 
@@ -85,14 +89,15 @@ public class MainActivity extends AppCompatActivity {
     static AdvertiseCallback mAdvertiseCallback;
     static BluetoothLeAdvertiser mBluetoothLeAdvertiser;
 
-    static Button startScanningButton;
-    static Button stopScanningButton;
-    static Button scan_list;
-    static Button startAdvButton;
-    static Button stopAdvButton;
-    static Button name_card;
+    static ImageButton startScanningButton;
+    static ImageButton stopScanningButton;
+    static ImageButton scan_list;
+    static ImageButton startAdvButton;
+    static ImageButton stopAdvButton;
+    static ImageButton name_card;
     public static TextView peripheralTextView;
-    static TextView sql_Text;
+
+    private AppCompatButton deletee;
 
     //    default mode: low power
 
@@ -109,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
     public static DBHelper DH=null;
 
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
 
         DH = new DBHelper(this,"CARD_DB",null,1);
         card = "";
-        new Random().nextBytes(id_byte);
+
         initialize();
         permission();
         element();
@@ -161,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        version = !mBluetoothAdapter.isLeExtendedAdvertisingSupported();
+//        version = !mBluetoothAdapter.isLeExtendedAdvertisingSupported();
     }
 
     public void permission() {
@@ -195,9 +201,6 @@ public class MainActivity extends AppCompatActivity {
         scan_list.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 final SQLiteDatabase db = DH.getReadableDatabase();
-//                for (int counter = 0 ; counter <card_list(db).length ; counter++) {
-//                    Log.e(TAG,counter + " list: " + Arrays.toString(card_list(db)[counter]));
-//                }
 
                 if (v.getId() == R.id.scan_list) {
                     new AlertDialog.Builder(MainActivity.this)
@@ -205,33 +208,55 @@ public class MainActivity extends AppCompatActivity {
                             .setItems(card_list(db)[1], new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, final int which) {
+
+                                    final AlertDialog.Builder mBuilder = new AlertDialog.Builder(MainActivity.this);
+                                    @SuppressLint("InflateParams") View mView = getLayoutInflater().inflate(R.layout.business_card,null);
+                                    mBuilder.setView(mView);
+                                    final AlertDialog dialog1 = mBuilder.create();
+                                    dialog1.show();
+                                    Objects.requireNonNull(dialog1.getWindow()).setLayout(1100,800);
+
+                                    TextView name= mView.findViewById(R.id.name);
+                                    TextView company= mView.findViewById(R.id.company);
+                                    TextView position= mView.findViewById(R.id.position);
+                                    TextView other= mView.findViewById(R.id.other);
+                                    final ImageButton deletee = mView.findViewById(R.id.deletee);
+
                                     StringBuilder resultData = new StringBuilder("");
-//                                    resultData.append("Name: ").append(card_list(db)[0][which]).append("\n");
                                     resultData.append("Phone: ").append(card_list(db)[2][which]).append("\n");
-                                    resultData.append("E-mail: ").append(card_list(db)[3][which]).append("\n");
-                                    resultData.append("Company: ").append(card_list(db)[4][which]).append("\n");
-                                    resultData.append("Position: ").append(card_list(db)[5][which]).append("\n");
+                                    resultData.append("e-mail: ").append(card_list(db)[3][which]).append("\n");
                                     resultData.append("Other: ").append(card_list(db)[6][which]);
-                                    Toast.makeText(getApplicationContext(), resultData, Toast.LENGTH_SHORT).show();
+                                    name.setText(card_list(db)[1][which]);
+                                    company.setText(card_list(db)[4][which]);
+                                    position.setText(card_list(db)[5][which]);
+                                    other.setText(resultData);
 
-                                    new AlertDialog.Builder(MainActivity.this)
-                                            .setTitle(card_list(db)[1][which])
-                                            .setMessage(resultData)
-                                            .setPositiveButton("close", new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int w) {
+                                    deletee.setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View v) {
+                                            delete(card_list(db)[0][which]);
+                                            dialog1.dismiss();
+                                        }
+                                    });
 
-                                                }
-                                            })
-                                            .setNegativeButton("delete", new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int w) {
-                                                    //todo 刪掉
-//                                                    Log.e(TAG,"刪掉");
-                                                    delete(card_list(db)[0][which]);
-                                                }
-                                            })
-                                            .show();
+
+//                                    new AlertDialog.Builder(MainActivity.this)
+//                                            .setTitle(card_list(db)[1][which])
+//                                            .setMessage(resultData)
+//                                            .setPositiveButton("close", new DialogInterface.OnClickListener() {
+//                                                @Override
+//                                                public void onClick(DialogInterface dialog, int w) {
+//
+//                                                }
+//                                            })
+//                                            .setNegativeButton("delete", new DialogInterface.OnClickListener() {
+//                                                @Override
+//                                                public void onClick(DialogInterface dialog, int w) {
+////                                                    Log.e(TAG,"刪掉");
+//                                                    delete(card_list(db)[0][which]);
+//                                                }
+//                                            })
+//                                            .show();
 
                                 }
                             })
@@ -246,7 +271,18 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-        sql_Text = findViewById(R.id.sql_Text);
+
+//        scan_list.setOnClickListener(new View.OnClickListener() {
+//            public void onClick(View v) {
+//                final AlertDialog.Builder mBuilder = new AlertDialog.Builder(MainActivity.this);
+//                @SuppressLint("InflateParams") View mView = getLayoutInflater().inflate(R.layout.business_card,null);
+//                mBuilder.setView(mView);
+//                final AlertDialog dialog = mBuilder.create();
+//                dialog.show();
+//                Objects.requireNonNull(dialog.getWindow()).setLayout(1000,750);
+//            }
+//        });
+
 
         /*--------------------------------------advertise----------------------------------------*/
         startAdvButton = findViewById(R.id.StartAdvButton);
@@ -292,8 +328,6 @@ public class MainActivity extends AppCompatActivity {
                 final EditText other = mView.findViewById(R.id.etorther);
                 final Button btn_card = mView.findViewById(R.id.btncard);
 
-
-
                 name.setText(SP.getString("NAME",null));
                 phone.setText(SP.getString("PHONE",null));
                 email.setText(SP.getString("EMAIL",null));
@@ -335,8 +369,6 @@ public class MainActivity extends AppCompatActivity {
 
                                 card = name.getText().toString() + ":" + phone.getText().toString() + ":" + email.getText().toString() + ":"
                                             + company.getText().toString() + ":" + position.getText().toString() + ":" + other.getText().toString()+ ":";
-
-                                new Random().nextBytes(id_byte);
 
                                 SharedPrefesSAVE(7,card);
                                 Log.e(TAG,"card: "+card.length()+card);

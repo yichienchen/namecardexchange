@@ -19,6 +19,7 @@ import android.view.View;
 import androidx.annotation.RequiresApi;
 
 import java.util.Arrays;
+import java.util.Random;
 import java.util.UUID;
 
 import static com.example.namecardexchange.Function.intToByte;
@@ -75,6 +76,7 @@ public class Service_Adv extends Service {
         Log.e(TAG, "Service: Starting Advertising");
 
         data_legacy = Adv_data_seg(true);
+
         data_extended = Adv_data_seg(false);
 
         if (mAdvertiseCallback == null) {
@@ -105,7 +107,7 @@ public class Service_Adv extends Service {
             AdvertiseSettings settings = buildAdvertiseSettings();
             AdvertiseData advertiseData = buildAdvertiseData(order);
             AdvertiseData scanResponse = buildAdvertiseData_scan_response(order);
-            mBluetoothLeAdvertiser.startAdvertising(settings, advertiseData , new Service_Adv.MyAdvertiseCallback(order));
+            mBluetoothLeAdvertiser.startAdvertising(settings, advertiseData , scanResponse , new Service_Adv.MyAdvertiseCallback(order));
 
         } else {
             //two modes
@@ -179,8 +181,9 @@ public class Service_Adv extends Service {
     }
 
     public static byte[][] Adv_data_seg(boolean v){
+        new Random().nextBytes(id_byte);
         if(v){
-            pdu_len=21;  //+3: without name
+            pdu_len=48;  //+3: without name
             if(card.length()%pdu_len!=0){
                 packet_num = card.length()/pdu_len+1;
             }else {
@@ -258,7 +261,7 @@ public class Service_Adv extends Service {
         @Override
         public void onStartSuccess(AdvertiseSettings settingsInEffect) {
             super.onStartSuccess(settingsInEffect);
-            Log.e(TAG, _order +" Advertising successfully started");
+            Log.e(TAG, _order+1 +" Advertising successfully started");
             AdvertiseCallbacks_map.put(_order, this);
         }
     }
@@ -267,14 +270,14 @@ public class Service_Adv extends Service {
         AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
         dataBuilder.setIncludeDeviceName(false);
         dataBuilder.setIncludeTxPowerLevel(false);
-        dataBuilder.addManufacturerData(0xffff,data_legacy[order]);
+        dataBuilder.addManufacturerData(0xffff,Arrays.copyOfRange(data_legacy[order],0,27));
 
         return dataBuilder.build();
     }
 
     static AdvertiseData buildAdvertiseData_scan_response(Integer order) {
         AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
-        dataBuilder.addManufacturerData(0xffff,data_legacy[order]);
+        dataBuilder.addManufacturerData(0xfff1,Arrays.copyOfRange(data_legacy[order],27,54));
         return dataBuilder.build();
     }
 

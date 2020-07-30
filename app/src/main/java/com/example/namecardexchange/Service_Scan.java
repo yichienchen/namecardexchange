@@ -41,9 +41,11 @@ import static com.example.namecardexchange.Service_scan_function.rssi_level_3;
 
 public class Service_Scan extends Service {
 
+    static int stop_int;
     @RequiresApi(api = Build.VERSION_CODES.O)
     public Service_Scan() {
         Log.e(TAG,"Service_Scan start");
+
         startScanning();
         stopScanningButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -67,6 +69,7 @@ public class Service_Scan extends Service {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void startScanning() {
+        stop_int=0;
         received_time.clear();
         received_time_interval.clear();
         received_time_Calendar.clear();
@@ -108,7 +111,7 @@ public class Service_Scan extends Service {
         matrix.add(new ArrayList<>());
 
 
-        peripheralTextView.setText(null);
+        peripheralTextView.setText("");
         startScanningButton.setVisibility(View.INVISIBLE);
         stopScanningButton.setVisibility(View.VISIBLE);
 
@@ -125,7 +128,7 @@ public class Service_Scan extends Service {
         ScanFilter Mau_filter_extended = new ScanFilter.Builder().setManufacturerData(0xffff,data_all,data_all).build();
         ScanFilter Mau_filter_legacy = new ScanFilter.Builder().setManufacturerData(0xffff,data_mask,data_mask).build();
 
-        Log.e(TAG,"data_mask: "+byte2HexStr(data_mask));
+//        Log.e(TAG,"data_mask: "+byte2HexStr(data_mask));
 
         ArrayList<ScanFilter> filters = new ArrayList<>();
 //        filters.add(Mau_filter_extended);
@@ -133,7 +136,7 @@ public class Service_Scan extends Service {
 
 
         ScanSettings settings = new ScanSettings.Builder()
-                .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
+                .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
                 .setLegacy(false)
 //                .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)  //Fails to start power optimized scan as this feature is not supported
 //                .setMatchMode(ScanSettings.)
@@ -144,7 +147,7 @@ public class Service_Scan extends Service {
         mBluetoothLeScanner.startScan(filters, settings, leScanCallback);
     }
 
-    public void stopScanning() {
+    public static void stopScanning() {
         Log.e(TAG,"stopping scanning");
 
         Log.e(TAG,"list_device: "+list_device);
@@ -152,7 +155,7 @@ public class Service_Scan extends Service {
 //            Log.e(TAG,"time_interval: "+time_interval.get(i)+rssi_level_1.get(i)+","+rssi_level_2.get(i)+","+rssi_level_3.get(i));
         }
 
-        peripheralTextView.append("Stopped Scanning");
+        peripheralTextView.setText("Stopped Scanning");
         startScanningButton.setVisibility(View.VISIBLE);
         stopScanningButton.setVisibility(View.INVISIBLE);
         AsyncTask.execute(new Runnable() {

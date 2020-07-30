@@ -5,6 +5,8 @@ import android.bluetooth.le.ScanResult;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -15,6 +17,8 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.regex.Pattern;
 
 import static com.example.namecardexchange.DBHelper.TB1;
@@ -33,6 +37,8 @@ import static com.example.namecardexchange.MainActivity.num_total;
 import static com.example.namecardexchange.MainActivity.peripheralTextView;
 import static com.example.namecardexchange.MainActivity.time_interval;
 import static com.example.namecardexchange.MainActivity.time_previous;
+import static com.example.namecardexchange.Service_Scan.stopScanning;
+import static com.example.namecardexchange.Service_Scan.stop_int;
 
 
 //TODO 都是利用收到下一個封包當作觸發裝置
@@ -54,17 +60,24 @@ public class Service_scan_function {
     static ScanCallback leScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result){
+
             String id;
             int total,order;
             String received_data = byte2HexStr(Objects.requireNonNull(Objects.requireNonNull(result.getScanRecord()).getManufacturerSpecificData(0xffff)));
-//            Log.e(TAG,"received_data: "+ received_data);
+            String received_data_rsp = byte2HexStr(Objects.requireNonNull(Objects.requireNonNull(result.getScanRecord()).getManufacturerSpecificData(0xfff1)));
+
+            received_data = received_data + received_data_rsp;
+
+//            Log.e(TAG,"received_data: "+hexToAscii(received_data));
+//            Log.e(TAG,"received_data1.length: "+received_data1.length());
+
+
             order = Array.getByte(Objects.requireNonNull(result.getScanRecord().getManufacturerSpecificData(0xffff)), 0);
             total = Array.getByte(Objects.requireNonNull(result.getScanRecord().getManufacturerSpecificData(0xffff)), 1);
             id = received_data.subSequence(2,12).toString();
 //            Log.e(TAG,"order: "+ order + " ; " + "total: " + total + " ; " + "id: " + id);
 
             received_data = received_data.subSequence(12,received_data.length()).toString();
-//            Log.e(TAG,"received_data: "+ received_data);
 
 
 
@@ -78,13 +91,13 @@ public class Service_scan_function {
             msg="Device Name: " + result.getDevice().getName() +"\n"+ "rssi: " + result.getRssi() +"\n" + "add: " + result.getDevice().getAddress() +"\n"
                     + "time: " + currentTime +"\n" + "data: " + received_data +"\n\n";
 
-            peripheralTextView.append(msg);
 
-            // auto scroll for text view
-            final int scrollAmount = peripheralTextView.getLayout().getLineTop(peripheralTextView.getLineCount()) - peripheralTextView.getHeight();
-            // if there is no need to scroll, scrollAmount will be <=0
-            if (scrollAmount > 0)
-                peripheralTextView.scrollTo(0, scrollAmount);
+
+//            // auto scroll for text view
+//            final int scrollAmount = peripheralTextView.getLayout().getLineTop(peripheralTextView.getLineCount()) - peripheralTextView.getHeight();
+//            // if there is no need to scroll, scrollAmount will be <=0
+//            if (scrollAmount > 0)
+//                peripheralTextView.scrollTo(0, scrollAmount);
 
             /*----------------------------------------------------------message END-----------------------------------------------------------------------*/
 
@@ -127,7 +140,7 @@ public class Service_scan_function {
             }
 
             long TimestampMillis = result.getTimestampNanos()/1000000; //單位:ms
-            int index = list_device.indexOf(id);
+            final int index = list_device.indexOf(id);
             int initial = 0;
             if(matrix.get(0).size()<list_device.size()){
                 matrix.get(0).add(index);                 //address
@@ -200,7 +213,7 @@ public class Service_scan_function {
 
             //重組segmentation
             Log.e(TAG,"received_data.length: "+received_data.length());
-            if(received_data.length()==42) {
+            if(received_data.length()==96) {
                 if (data_list.get(index).isEmpty()) {
                     for (int i = 0; i < total; i++) {
                         data_list.get(index).add("0");
@@ -226,6 +239,41 @@ public class Service_scan_function {
                 }
             }
             //重組結束
+
+            int num_finish = 0;
+            for(int count = 0 ; count < data_list.size() ; count ++){
+                if(data_list.get(count).contains("finish")){
+                    num_finish = num_finish + 1;
+                }
+
+            }
+
+
+            peripheralTextView.setText("");
+            msg = "There are " + data_list.size() + " user around.\n" +
+                    "You have received " + num_finish + " business card!\n";
+            peripheralTextView.setText(msg);
+
+
+
+            if(data_list.size() == num_finish){
+                stop_int = stop_int + 1;
+
+                final int finalNum_finish = num_finish;
+                if(stop_int == 1){
+                    new Handler().postDelayed(new Runnable() {
+                        public void run() {
+                            if(data_list.size() == finalNum_finish ){
+                                stopScanning();
+                                data_list.get(index).remove("finish");
+                            }else {
+                                stop_int = 0;
+                            }
+                        }
+                    }, 10000);   //10 seconds
+                }
+
+            }
 
 //            Log.e(TAG,"data_list: "+data_list);
 
@@ -276,55 +324,6 @@ public class Service_scan_function {
         }
     };
 
-//    public static void add(String s,Calendar first,Calendar last,int rssi_1,int rssi_2,int rssi_3) {
-//        SQLiteDatabase db = DH.getReadableDatabase();
-//        ContentValues values = new ContentValues();
-//        values.put("user_id",s);
-//        values.put("time_first",format.format(first.getTime()));
-//        values.put("time_last",format.format(last.getTime()));
-//        values.put("rssi_level_1",rssi_1);
-//        values.put("rssi_level_2",rssi_2);
-//        values.put("rssi_level_3",rssi_3);
-//        values.put("is_contact",0);
-//        db.insert(TB1,null,values);
-//        show(db);
-//    }
-
-//    public static void delete(String _id){
-//        SQLiteDatabase db = DH.getWritableDatabase();
-//        db.delete(TB1,"_id=?",new String[]{_id});
-//        show(db);
-//    }
-
-//    private static void show(SQLiteDatabase db){
-//        Cursor cursor = db.query(TB1,new String[]{"_id","user_id","time_first","time_last","rssi_level_1","rssi_level_2","rssi_level_3","is_contact"},
-//                null,null,null,null,null);
-//
-//        StringBuilder resultData = new StringBuilder("RESULT: \n");
-//        while(cursor.moveToNext()){
-//            int id = cursor.getInt(0);
-//            String user_id = cursor.getString(1);
-//            String time_first = cursor.getString(2);
-//            String time_last = cursor.getString(3);
-//            int rssi_1 = cursor.getInt(4);
-//            int rssi_2 = cursor.getInt(5);
-//            int rssi_3 = cursor.getInt(6);
-//            int is_contact = cursor.getInt(7);
-//
-//            resultData.append(id).append(": ");
-//            resultData.append(user_id).append("\n ");
-//            resultData.append(time_first).append(", ");
-//            resultData.append(time_last).append("\n");
-//            resultData.append("RSSI level: ").append(rssi_1).append(", ");
-//            resultData.append(rssi_2).append(", ");
-//            resultData.append(rssi_3).append("\n ");
-//            resultData.append("is check: ").append(is_contact);
-//            resultData.append("\n");
-//        }
-//        sql_Text.setText(resultData);
-//        sql_Text.setMovementMethod(new ScrollingMovementMethod()); //垂直滾動
-//        cursor.close();
-//    }
 
     private static long time_difference_(Calendar first, Calendar last){
         Date first_time = first.getTime();

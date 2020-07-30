@@ -5,73 +5,90 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:paddingBottom="16dp"
-    android:paddingLeft="16dp"
-    android:paddingRight="16dp"
-    android:paddingTop="16dp"
-    tools:context="com.example.test_0518.MainActivity">
+    android:paddingLeft="30dp"
+    android:paddingRight="30dp"
+    android:paddingTop="100dp"
+    tools:context="com.example.namecardexchange.MainActivity">
 
-    <Button
-        android:layout_width="160dp"
-        android:layout_height="45dp"
-        android:text="scan on"
+    <ImageButton
         android:id="@+id/StartScanButton"
-        android:layout_marginTop="40dp"/>
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_alignParentEnd="true"
+        app:layout_constraintStart_toStartOf="parent"
+        android:background="@null"
+        android:scaleType = "centerInside"
+        app:srcCompat="@drawable/btn_start_scan"
+        tools:ignore="RtlSymmetry"
+        />
 
-    <Button
+    <ImageButton
         android:id="@+id/StopScanButton"
-        android:layout_width="160dp"
-        android:layout_height="45dp"
-        android:layout_marginTop="40dp"
-        android:text="scan off" />
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_alignParentEnd="true"
+        app:layout_constraintStart_toStartOf="parent"
+        android:background="@null"
+        android:scaleType = "centerInside"
+
+
+        app:srcCompat="@drawable/btn_stop_scan"
+        />
+
+
+    <ImageButton
+        android:id="@+id/StartAdvButton"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_gravity="center|center_horizontal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="@null"
+        app:srcCompat="@drawable/btn_start_adv"
+        android:scaleType = "centerInside"/>
+
+    <ImageButton
+        android:id="@+id/StopAdvButton"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+
+        android:layout_gravity="center|center_horizontal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/StartAdvButton"
+        android:background="@null"
+        app:srcCompat="@drawable/btn_stop_adv"
+        android:scaleType = "centerInside"/>
+
+    <ImageButton
+        android:id="@+id/name_card"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginTop="150dp"
+        android:background="@null"
+        android:scaleType = "centerInside"
+
+
+        app:srcCompat="@drawable/my_card"
+        />
+
+    <ImageButton
+        android:id="@+id/scan_list"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="150dp"
+        android:background="@null"
+        app:srcCompat="@drawable/card_list"
+        android:scaleType = "centerInside"/>
 
     <TextView
         android:id="@+id/PeripheralTextView"
         android:layout_width="match_parent"
-        android:layout_height="300dp"
-        android:layout_marginTop="100dp"
+        android:layout_height="match_parent"
+        android:layout_marginTop="300dp"
+        android:typeface="serif"
         android:maxLines="30"
         android:scrollbars="vertical" />
-
-    <TextView
-        android:id="@+id/sql_Text"
-        android:layout_width="match_parent"
-        android:layout_height="300dp"
-        android:layout_marginTop="410dp" />
-
-    <Button
-        android:id="@+id/scan_list"
-        android:layout_width="160dp"
-        android:layout_height="45dp"
-        android:layout_alignParentRight="true"
-        android:layout_marginTop="40dp"
-        android:text="scan list" />
-
-    <Button
-        android:id="@+id/StartAdvButton"
-        android:layout_width="160dp"
-        android:layout_height="45dp"
-        android:layout_gravity="center|center_horizontal"
-        android:text="adv on"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/StopAdvButton"
-        android:layout_width="160dp"
-        android:layout_height="45dp"
-
-        android:layout_gravity="center|center_horizontal"
-        android:text="adv off"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/StartAdvButton" />
-
-    <Button
-        android:id="@+id/name_card"
-        android:layout_width="160dp"
-        android:layout_height="45dp"
-        android:layout_alignParentRight="true"
-        android:text="Name card"
-        app:layout_constraintStart_toStartOf="parent" />
 
 
 </RelativeLayout>
