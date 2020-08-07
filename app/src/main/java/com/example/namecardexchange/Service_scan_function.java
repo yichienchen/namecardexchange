@@ -256,24 +256,24 @@ public class Service_scan_function {
 
 
 
-            if(data_list.size() == num_finish){
-                stop_int = stop_int + 1;
-
-                final int finalNum_finish = num_finish;
-                if(stop_int == 1){
-                    new Handler().postDelayed(new Runnable() {
-                        public void run() {
-                            if(data_list.size() == finalNum_finish ){
-                                stopScanning();
-                                data_list.get(index).remove("finish");
-                            }else {
-                                stop_int = 0;
-                            }
-                        }
-                    }, 10000);   //10 seconds
-                }
-
-            }
+//            if(data_list.size() == num_finish){
+//                stop_int = stop_int + 1;
+//
+//                final int finalNum_finish = num_finish;
+//                if(stop_int == 1){
+//                    new Handler().postDelayed(new Runnable() {
+//                        public void run() {
+//                            if(data_list.size() == finalNum_finish ){
+//                                stopScanning();
+//                                data_list.get(index).remove("finish");
+//                            }else {
+//                                stop_int = 0;
+//                            }
+//                        }
+//                    }, 10000);   //10 seconds
+//                }
+//
+//            }
 
 //            Log.e(TAG,"data_list: "+data_list);
 

@@ -11,6 +11,7 @@ import android.bluetooth.le.AdvertisingSetParameters;
 import android.bluetooth.le.PeriodicAdvertisingParameters;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.ParcelUuid;
 import android.util.Log;
@@ -28,6 +29,7 @@ import static com.example.namecardexchange.MainActivity.TAG;
 import static com.example.namecardexchange.MainActivity.card;
 import static com.example.namecardexchange.MainActivity.data_legacy;
 import static com.example.namecardexchange.MainActivity.data_extended;
+import static com.example.namecardexchange.MainActivity.data_list;
 import static com.example.namecardexchange.MainActivity.extendedAdvertiseCallbacks_map;
 import static com.example.namecardexchange.MainActivity.id_byte;
 import static com.example.namecardexchange.MainActivity.mAdvertiseCallback;
@@ -35,7 +37,8 @@ import static com.example.namecardexchange.MainActivity.mBluetoothLeAdvertiser;
 import static com.example.namecardexchange.MainActivity.startAdvButton;
 import static com.example.namecardexchange.MainActivity.stopAdvButton;
 import static com.example.namecardexchange.MainActivity.version;
-
+import static com.example.namecardexchange.Service_Scan.stopScanning;
+import static com.example.namecardexchange.Service_Scan.stop_int;
 
 
 public class Service_Adv extends Service {
@@ -77,21 +80,20 @@ public class Service_Adv extends Service {
 
         data_legacy = Adv_data_seg(true);
 
-        data_extended = Adv_data_seg(false);
-
         if (mAdvertiseCallback == null) {
             if (mBluetoothLeAdvertiser != null) {
                 for (int q=0;q<data_legacy.length;q++){
                     startBroadcast(q,true);
                 }
-                if (!version){
-                    for (int q=0;q<data_extended.length;q++){
-                        startBroadcast(q,false);
-                    }
-                }
-
             }
         }
+
+        new Handler().postDelayed(new Runnable() {
+            public void run() {
+                stopAdvertising();
+                stopSelf();
+            }
+        }, 10*1000);   //10 seconds
 
         startAdvButton.setVisibility(View.INVISIBLE);
         stopAdvButton.setVisibility(View.VISIBLE);
@@ -101,25 +103,13 @@ public class Service_Adv extends Service {
     public void startBroadcast(Integer order , boolean v) {
         String localName =  String.valueOf(1) ;
         BluetoothAdapter.getDefaultAdapter().setName(localName);
-
-        if (v) {
-            //only BLE4.0
-            AdvertiseSettings settings = buildAdvertiseSettings();
-            AdvertiseData advertiseData = buildAdvertiseData(order);
-            AdvertiseData scanResponse = buildAdvertiseData_scan_response(order);
-            mBluetoothLeAdvertiser.startAdvertising(settings, advertiseData , scanResponse , new Service_Adv.MyAdvertiseCallback(order));
-
-        } else {
-            //two modes
-            AdvertiseData advertiseData_extended = buildAdvertiseData_extended(order);
-            AdvertiseData periodicData = buildAdvertiseData_periodicData();
-            AdvertisingSetParameters parameters = buildAdvertisingSetParameters();
-            PeriodicAdvertisingParameters periodicParameters = buildperiodicParameters();
-            mBluetoothLeAdvertiser.startAdvertisingSet(parameters,advertiseData_extended,null,
-                    null,null,0,0,new ExtendedAdvertiseCallback(order));
+         //only BLE4.0
+        AdvertiseSettings settings = buildAdvertiseSettings();
+        AdvertiseData advertiseData = buildAdvertiseData(order);
+        AdvertiseData scanResponse = buildAdvertiseData_scan_response(order);
+        mBluetoothLeAdvertiser.startAdvertising(settings, advertiseData , scanResponse , new Service_Adv.MyAdvertiseCallback(order));
 
 
-        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -127,11 +117,6 @@ public class Service_Adv extends Service {
         if (mBluetoothLeAdvertiser != null) {
             for (int q=0;q<data_legacy.length;q++){
                 stopBroadcast(q,true);
-            }
-            if (!version){
-                for (int q=0;q<data_extended.length;q++){
-                    stopBroadcast(q,false);
-                }
             }
             mAdvertiseCallback = null;
         }
@@ -261,7 +246,7 @@ public class Service_Adv extends Service {
         @Override
         public void onStartSuccess(AdvertiseSettings settingsInEffect) {
             super.onStartSuccess(settingsInEffect);
-            Log.e(TAG, _order+1 +" Advertising successfully started");
+            Log.e(TAG, _order +" Advertising successfully started");
             AdvertiseCallbacks_map.put(_order, this);
         }
     }
@@ -281,56 +266,6 @@ public class Service_Adv extends Service {
         return dataBuilder.build();
     }
 
-    //BLE 5.0
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    public class ExtendedAdvertiseCallback extends AdvertisingSetCallback {
-        private final Integer _order;
-        ExtendedAdvertiseCallback(Integer order) {
-            _order = order;
-        }
-
-        @Override
-        public void onAdvertisingSetStarted(AdvertisingSet advertisingSet, int txPower, int status) {
-            if (status==AdvertisingSetCallback.ADVERTISE_FAILED_ALREADY_STARTED)
-                Log.e(TAG, "ADVERTISE_FAILED_ALREADY_STARTED");
-            else if (status==AdvertisingSetCallback.ADVERTISE_FAILED_FEATURE_UNSUPPORTED)
-                Log.e(TAG, "ADVERTISE_FAILED_FEATURE_UNSUPPORTED");
-            else if (status==AdvertisingSetCallback.ADVERTISE_FAILED_DATA_TOO_LARGE)
-                Log.e(TAG, "ADVERTISE_FAILED_DATA_TOO_LARGE");
-            else if (status==AdvertisingSetCallback.ADVERTISE_FAILED_INTERNAL_ERROR)
-                Log.e(TAG, "ADVERTISE_FAILED_INTERNAL_ERROR");
-            else if (status==AdvertisingSetCallback.ADVERTISE_FAILED_TOO_MANY_ADVERTISERS)
-                Log.e(TAG, "ADVERTISE_FAILED_TOO_MANY_ADVERTISERS");
-            else if (status==AdvertisingSetCallback.ADVERTISE_SUCCESS) {
-                count=count+1;
-                Log.e(TAG,   "ADVERTISE_SUCCESS" + "(" + _order + ")"+count);
-                startAdvButton.setVisibility(View.INVISIBLE);
-                stopAdvButton.setVisibility(View.VISIBLE);
-                extendedAdvertiseCallbacks_map.put(_order,this);
-            }
-        }
-        @Override
-        public void onAdvertisingSetStopped(AdvertisingSet advertisingSet) {
-            Log.e(TAG, "onAdvertisingSetStopped:" + "("+ _order +")");
-        }
-
-        @Override
-        public void onAdvertisingEnabled (AdvertisingSet advertisingSet, boolean enable, int status) {
-            Log.e(TAG,"onAdvertisingEnabled: " + enable + "("+ _order +")");
-//            stopAdvButton.setVisibility(View.INVISIBLE);
-//            startAdvButton.setVisibility(View.VISIBLE);
-//            if (mAdvertiseCallback == null) {
-//                if (mBluetoothLeAdvertiser != null) {
-//                    for (int q=0;q<packet_num;q++){  //x
-//                        if(count<50){
-//                            stopBroadcast(q);
-//                            startBroadcast(q);
-//                        }
-//                    }
-//                }
-//            }
-        }
-    }
 
     public static AdvertiseSettings buildAdvertiseSettings() {
         AdvertiseSettings.Builder settingsBuilder = new AdvertiseSettings.Builder()
@@ -339,44 +274,5 @@ public class Service_Adv extends Service {
                 .setConnectable(false)
                 .setTimeout(0);
         return settingsBuilder.build();
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    public static AdvertisingSetParameters buildAdvertisingSetParameters() {
-        AdvertisingSetParameters.Builder parametersBuilder = new AdvertisingSetParameters.Builder()
-                .setConnectable(false)
-                .setInterval(400)
-                .setTxPowerLevel(AdvertisingSetParameters.TX_POWER_MEDIUM)
-                .setLegacyMode(false);
-        return parametersBuilder.build();
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    public static PeriodicAdvertisingParameters buildperiodicParameters() {
-        PeriodicAdvertisingParameters.Builder periodicparametersBuilder = new PeriodicAdvertisingParameters.Builder()
-                .setInterval(200);
-        return periodicparametersBuilder.build();
-    }
-
-    static AdvertiseData buildAdvertiseData_extended(int order) {
-        AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
-        dataBuilder.setIncludeDeviceName(false);
-
-        Log.e(TAG,"data: "+ order);
-        dataBuilder.addManufacturerData(0xffff,data_extended[order]);
-
-//        ParcelUuid pUuid1 = new ParcelUuid(UUID.fromString("00001111-0000-1000-8000-00805F9B34FB"));
-//        dataBuilder.addServiceData(pUuid1,data_[order]);
-//        dataBuilder.addServiceData(pUuid1,data_[order]);
-
-        return dataBuilder.build();
-    }
-
-    //TODO data要改
-    static AdvertiseData buildAdvertiseData_periodicData() {
-        AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
-        byte[] data = {0x00,0x11,0xf,0x1a,0x00,0x11,0xf,0x1a,0x00,0x11,0xf,0x1a,0x00,0x11,0xf,0x1a,0x00,0x11,0xf,0x1a,0x00,0x11,0xf,0x1a,0x00,0x11,0xf,0x1a,0x00,0x11,0xf,0x1a,0x00,0x11,0xf,0x1a,0x00,0x11,0xf,0x1a};
-        dataBuilder.addManufacturerData(0xffff,data);
-        return dataBuilder.build();
     }
 }
