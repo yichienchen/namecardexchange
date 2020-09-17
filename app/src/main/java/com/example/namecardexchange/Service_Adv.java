@@ -1,19 +1,13 @@
 package com.example.namecardexchange;
 
 import android.app.Service;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.le.AdvertiseCallback;
 import android.bluetooth.le.AdvertiseData;
 import android.bluetooth.le.AdvertiseSettings;
-import android.bluetooth.le.AdvertisingSet;
-import android.bluetooth.le.AdvertisingSetCallback;
-import android.bluetooth.le.AdvertisingSetParameters;
-import android.bluetooth.le.PeriodicAdvertisingParameters;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.ParcelUuid;
 import android.util.Log;
 import android.view.View;
 
@@ -21,34 +15,25 @@ import androidx.annotation.RequiresApi;
 
 import java.util.Arrays;
 import java.util.Random;
-import java.util.UUID;
 
 import static com.example.namecardexchange.Function.intToByte;
 import static com.example.namecardexchange.MainActivity.AdvertiseCallbacks_map;
 import static com.example.namecardexchange.MainActivity.TAG;
 import static com.example.namecardexchange.MainActivity.card;
 import static com.example.namecardexchange.MainActivity.data_legacy;
-import static com.example.namecardexchange.MainActivity.data_extended;
-import static com.example.namecardexchange.MainActivity.data_list;
-import static com.example.namecardexchange.MainActivity.extendedAdvertiseCallbacks_map;
 import static com.example.namecardexchange.MainActivity.id_byte;
 import static com.example.namecardexchange.MainActivity.mAdvertiseCallback;
 import static com.example.namecardexchange.MainActivity.mBluetoothLeAdvertiser;
 import static com.example.namecardexchange.MainActivity.startAdvButton;
 import static com.example.namecardexchange.MainActivity.stopAdvButton;
-import static com.example.namecardexchange.MainActivity.version;
-import static com.example.namecardexchange.Service_Scan.stopScanning;
-import static com.example.namecardexchange.Service_Scan.stop_int;
 
 
 public class Service_Adv extends Service {
     static int packet_num;
     static int pdu_len;
-    int count =0;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public Service_Adv() {
-
         startAdvertising();
         stopAdvButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -58,7 +43,6 @@ public class Service_Adv extends Service {
         });
         startAdvButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                count=0;
                 startAdvertising();
             }
         });
@@ -72,18 +56,17 @@ public class Service_Adv extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-
-
+    //開啟廣播
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void startAdvertising(){
         Log.e(TAG, "Service: Starting Advertising");
 
-        data_legacy = Adv_data_seg(true);
+        data_legacy = Adv_data_seg();
 
         if (mAdvertiseCallback == null) {
             if (mBluetoothLeAdvertiser != null) {
                 for (int q=0;q<data_legacy.length;q++){
-                    startBroadcast(q,true);
+                    startBroadcast(q);
                 }
             }
         }
@@ -93,30 +76,27 @@ public class Service_Adv extends Service {
                 stopAdvertising();
                 stopSelf();
             }
-        }, 10*1000);   //10 seconds
+        }, 60*1000);   //60秒自動結束廣播
 
         startAdvButton.setVisibility(View.INVISIBLE);
         stopAdvButton.setVisibility(View.VISIBLE);
     }
 
+    //開啟某一廣播(order為該data的順序)
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public void startBroadcast(Integer order , boolean v) {
-        String localName =  String.valueOf(1) ;
-        BluetoothAdapter.getDefaultAdapter().setName(localName);
-         //only BLE4.0
+    public void startBroadcast(Integer order) {
         AdvertiseSettings settings = buildAdvertiseSettings();
         AdvertiseData advertiseData = buildAdvertiseData(order);
         AdvertiseData scanResponse = buildAdvertiseData_scan_response(order);
         mBluetoothLeAdvertiser.startAdvertising(settings, advertiseData , scanResponse , new Service_Adv.MyAdvertiseCallback(order));
-
-
     }
 
+    //關閉廣播
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void stopAdvertising(){
         if (mBluetoothLeAdvertiser != null) {
             for (int q=0;q<data_legacy.length;q++){
-                stopBroadcast(q,true);
+                stopBroadcast(q);
             }
             mAdvertiseCallback = null;
         }
@@ -124,72 +104,49 @@ public class Service_Adv extends Service {
         startAdvButton.setVisibility(View.VISIBLE);
     }
 
+    //關閉某一廣播(order為該data的順序)
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public void stopBroadcast(Integer order , boolean v) {
+    public void stopBroadcast(Integer order) {
         final AdvertiseCallback adCallback = AdvertiseCallbacks_map.get(order);
-        final AdvertisingSetCallback exadvCallback = extendedAdvertiseCallbacks_map.get(order);
-        if (!v) {
-            //BLE 5.0
-            if (exadvCallback != null) {
-                try {
-                    if (mBluetoothLeAdvertiser != null) {
-                        mBluetoothLeAdvertiser.stopAdvertisingSet(exadvCallback);
-                    }
-                    else {
-                        Log.w(TAG,"Not able to stop broadcast; mBtAdvertiser is null");
-                    }
+
+        //BLE 4.0
+        if (adCallback != null) {
+            try {
+                if (mBluetoothLeAdvertiser != null) {
+                    mBluetoothLeAdvertiser.stopAdvertising(adCallback);
                 }
-                catch(RuntimeException e) { // Can happen if BT adapter is not in ON state
-                    Log.w(TAG,"Not able to stop broadcast; BT state: {}");
+                else {
+                    Log.w(TAG,"Not able to stop broadcast; mBtAdvertiser is null");
                 }
-                extendedAdvertiseCallbacks_map.remove(order);
             }
-            //Log.e(TAG,order +" Advertising successfully stopped.");
-        }else {
-            //BLE 4.0
-            if (adCallback != null) {
-                try {
-                    if (mBluetoothLeAdvertiser != null) {
-                        mBluetoothLeAdvertiser.stopAdvertising(adCallback);
-                    }
-                    else {
-                        Log.w(TAG,"Not able to stop broadcast; mBtAdvertiser is null");
-                    }
-                }
-                catch(RuntimeException e) { // Can happen if BT adapter is not in ON state
-                    Log.w(TAG,"Not able to stop broadcast; BT state: {}");
-                }
-                AdvertiseCallbacks_map.remove(order);
+            catch(RuntimeException e) { // Can happen if BT adapter is not in ON state
+                Log.w(TAG,"Not able to stop broadcast; BT state: {}");
             }
-            Log.e(TAG,order +" Advertising successfully stopped");
+            AdvertiseCallbacks_map.remove(order);
         }
+        Log.e(TAG,order +" Advertising successfully stopped");
+
+
     }
 
-    public static byte[][] Adv_data_seg(boolean v){
+    //segment
+    public static byte[][] Adv_data_seg(){
         new Random().nextBytes(id_byte);
-        if(v){
-            pdu_len=48;  //+3: without name
-            if(card.length()%pdu_len!=0){
-                packet_num = card.length()/pdu_len+1;
-            }else {
-                packet_num = card.length()/pdu_len;
-            }
+        pdu_len=48;
+        if(card.length()%pdu_len!=0){
+            packet_num = card.length()/pdu_len+1;
         }else {
-            pdu_len=245;
-            if(card.length()%pdu_len!=0){
-                packet_num = card.length()/pdu_len+1;
-            }else {
-                packet_num = card.length()/pdu_len;
-            }
+            packet_num = card.length()/pdu_len;
         }
+
 
         StringBuilder data = new StringBuilder(card);
         for(int c=data.length();c%pdu_len!=0;c++){
             data.append("0");
         }
+
         byte[] data_byte = data.toString().getBytes();
         byte[][] adv_byte = new byte[packet_num][pdu_len+id_byte.length+2];
-
 
         for (int counter = 0 ; counter <packet_num ; counter++) {
             adv_byte[counter][0]= intToByte(counter+1);
@@ -203,10 +160,6 @@ public class Service_Adv extends Service {
                 System.arraycopy(register, 0, adv_byte[counter], id_byte.length+2, register.length);
             }
         }
-
-//        for (int counter = 0 ; counter <packet_num ; counter++) {
-//            Log.e(TAG,counter + " adv_byte: " + byte2HexStr(adv_byte[counter]));
-//        }
 
         return adv_byte;
     }
@@ -256,7 +209,6 @@ public class Service_Adv extends Service {
         dataBuilder.setIncludeDeviceName(false);
         dataBuilder.setIncludeTxPowerLevel(false);
         dataBuilder.addManufacturerData(0xffff,Arrays.copyOfRange(data_legacy[order],0,27));
-
         return dataBuilder.build();
     }
 
@@ -271,8 +223,7 @@ public class Service_Adv extends Service {
         AdvertiseSettings.Builder settingsBuilder = new AdvertiseSettings.Builder()
                 .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
                 .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
-                .setConnectable(false)
-                .setTimeout(0);
+                .setConnectable(false);
         return settingsBuilder.build();
     }
 }

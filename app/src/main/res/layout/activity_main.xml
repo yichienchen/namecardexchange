@@ -5,9 +5,10 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:paddingBottom="16dp"
-    android:paddingLeft="40dp"
-    android:paddingRight="40dp"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
     android:paddingTop="100dp"
+    >
     tools:context="com.example.namecardexchange.MainActivity">
 
     <ImageButton
@@ -20,6 +21,9 @@
         android:scaleType = "centerInside"
         app:srcCompat="@drawable/btn_start_scan"
         tools:ignore="RtlSymmetry"
+
+        android:layout_marginEnd="20dp"
+
         />
 
     <ImageButton
@@ -33,6 +37,7 @@
 
 
         app:srcCompat="@drawable/btn_stop_scan"
+        android:layout_marginEnd="20dp"
         />
 
 
@@ -45,7 +50,9 @@
         app:layout_constraintTop_toTopOf="parent"
         android:background="@null"
         app:srcCompat="@drawable/btn_start_adv"
-        android:scaleType = "centerInside"/>
+        android:scaleType = "centerInside"
+        android:layout_marginStart="20dp"
+        />
 
     <ImageButton
         android:id="@+id/StopAdvButton"
@@ -57,7 +64,9 @@
         app:layout_constraintTop_toBottomOf="@+id/StartAdvButton"
         android:background="@null"
         app:srcCompat="@drawable/btn_stop_adv"
-        android:scaleType = "centerInside"/>
+        android:scaleType = "centerInside"
+        android:layout_marginStart="20dp"
+        />
 
     <ImageButton
         android:id="@+id/name_card"
@@ -66,7 +75,7 @@
         android:layout_marginTop="150dp"
         android:background="@null"
         android:scaleType = "centerInside"
-
+        android:layout_marginStart="20dp"
 
         app:srcCompat="@drawable/my_card"
         />
@@ -79,7 +88,9 @@
         android:layout_marginTop="150dp"
         android:background="@null"
         app:srcCompat="@drawable/card_list"
-        android:scaleType = "centerInside"/>
+        android:scaleType = "centerInside"
+        android:layout_marginEnd="20dp"
+        />
 
     <TextView
         android:id="@+id/PeripheralTextView"
@@ -88,6 +99,8 @@
         android:layout_marginTop="300dp"
         android:typeface="serif"
         android:maxLines="30"
+        android:textSize="20sp"
+
         android:scrollbars="vertical" />
 
 

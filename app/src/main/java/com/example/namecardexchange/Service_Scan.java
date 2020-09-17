@@ -19,30 +19,18 @@ import androidx.annotation.RequiresApi;
 
 import java.util.ArrayList;
 
-import static com.example.namecardexchange.Function.byte2HexStr;
+
 import static com.example.namecardexchange.MainActivity.TAG;
 import static com.example.namecardexchange.MainActivity.data_list;
 import static com.example.namecardexchange.MainActivity.list_device;
-import static com.example.namecardexchange.MainActivity.list_device_detail;
 import static com.example.namecardexchange.MainActivity.mBluetoothLeScanner;
-import static com.example.namecardexchange.MainActivity.matrix;
-import static com.example.namecardexchange.MainActivity.mean_total;
 import static com.example.namecardexchange.MainActivity.num_list;
-import static com.example.namecardexchange.MainActivity.num_time;
-import static com.example.namecardexchange.MainActivity.num_total;
 import static com.example.namecardexchange.MainActivity.peripheralTextView;
 import static com.example.namecardexchange.MainActivity.startScanningButton;
 import static com.example.namecardexchange.MainActivity.stopScanningButton;
-import static com.example.namecardexchange.MainActivity.time_interval;
-import static com.example.namecardexchange.MainActivity.time_previous;
-import static com.example.namecardexchange.Service_Adv.pdu_len;
+
 import static com.example.namecardexchange.Service_scan_function.leScanCallback;
-import static com.example.namecardexchange.Service_scan_function.received_time;
-import static com.example.namecardexchange.Service_scan_function.received_time_Calendar;
-import static com.example.namecardexchange.Service_scan_function.received_time_interval;
-import static com.example.namecardexchange.Service_scan_function.rssi_level_1;
-import static com.example.namecardexchange.Service_scan_function.rssi_level_2;
-import static com.example.namecardexchange.Service_scan_function.rssi_level_3;
+
 
 public class Service_Scan extends Service {
 
@@ -76,72 +64,30 @@ public class Service_Scan extends Service {
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void startScanning() {
         stop_int = 0;
-        received_time.clear();
-        received_time_interval.clear();
-        received_time_Calendar.clear();
 
         Log.e(TAG, "start scanning");
 
-
         list_device.clear();
-        list_device_detail.clear();
-
-        num_total.clear();
-        time_previous.clear();
-        mean_total.clear();
-        matrix.clear();
-        time_interval.clear();
-
-        rssi_level_1.clear();
-        rssi_level_2.clear();
-        rssi_level_3.clear();
-
         num_list.clear();
-        num_time.clear();
         data_list.clear();
-
-        long zero = 0;
-        for (int j = 0; j < 100; j++) {  //100 : mac address數量上限
-            num_total.add(1);
-            time_previous.add(zero);
-            mean_total.add(zero);
-        }
-
-        //add six row
-        matrix.add(new ArrayList<>());
-        matrix.add(new ArrayList<>());
-        matrix.add(new ArrayList<>());
-        matrix.add(new ArrayList<>());
-        matrix.add(new ArrayList<>());
-        matrix.add(new ArrayList<>());
-        matrix.add(new ArrayList<>());
-
 
         peripheralTextView.setText("");
         startScanningButton.setVisibility(View.INVISIBLE);
         stopScanningButton.setVisibility(View.VISIBLE);
 
-//        System.arraycopy(id_byte, 0, data_all, 2, id_byte.length);
-
-
         byte[] data_mask = new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
+                                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
         ScanFilter Mau_filter_legacy = new ScanFilter.Builder().setManufacturerData(0xffff, data_mask, data_mask).build();
 
-//        Log.e(TAG,"data_mask: "+byte2HexStr(data_mask));
-
         ArrayList<ScanFilter> filters = new ArrayList<>();
         filters.add(Mau_filter_legacy);
-
 
         ScanSettings settings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
                 .setLegacy(false)
                 .build();
-//        btScanner.flushPendingScanResults(leScanCallback);
         mBluetoothLeScanner.startScan(filters, settings, leScanCallback);
 
         handler= new Handler();
@@ -161,16 +107,11 @@ public class Service_Scan extends Service {
                     Log.e(TAG,"keep scanning");
                 }
             }
-        }, 10*1000);   //10 seconds
+        }, 30*1000);   //30 seconds 自動結束
     }
 
-        public static void stopScanning () {
+    public static void stopScanning () {
             Log.e(TAG, "stopping scanning");
-
-            Log.e(TAG, "list_device: " + list_device);
-            for (int i = 0; i < list_device.size(); i++) {
-//            Log.e(TAG,"time_interval: "+time_interval.get(i)+rssi_level_1.get(i)+","+rssi_level_2.get(i)+","+rssi_level_3.get(i));
-            }
 
             peripheralTextView.setText("Stopped Scanning");
             startScanningButton.setVisibility(View.VISIBLE);
@@ -204,7 +145,6 @@ public class Service_Scan extends Service {
                     })
 
                     .create();
-//            dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY);
 
             Window window = dialog.getWindow();
             if (window != null) {

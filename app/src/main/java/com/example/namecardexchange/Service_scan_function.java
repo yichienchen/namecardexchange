@@ -5,21 +5,13 @@ import android.bluetooth.le.ScanResult;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.lang.reflect.Array;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Objects;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.regex.Pattern;
 
 import static com.example.namecardexchange.DBHelper.TB1;
 import static com.example.namecardexchange.Function.byte2HexStr;
@@ -28,34 +20,12 @@ import static com.example.namecardexchange.MainActivity.DH;
 import static com.example.namecardexchange.MainActivity.TAG;
 import static com.example.namecardexchange.MainActivity.data_list;
 import static com.example.namecardexchange.MainActivity.list_device;
-import static com.example.namecardexchange.MainActivity.list_device_detail;
-import static com.example.namecardexchange.MainActivity.matrix;
-import static com.example.namecardexchange.MainActivity.mean_total;
 import static com.example.namecardexchange.MainActivity.num_list;
-import static com.example.namecardexchange.MainActivity.num_time;
-import static com.example.namecardexchange.MainActivity.num_total;
 import static com.example.namecardexchange.MainActivity.peripheralTextView;
-import static com.example.namecardexchange.MainActivity.time_interval;
-import static com.example.namecardexchange.MainActivity.time_previous;
-import static com.example.namecardexchange.Service_Scan.stopScanning;
-import static com.example.namecardexchange.Service_Scan.stop_int;
 
 
-//TODO 都是利用收到下一個封包當作觸發裝置
 public class Service_scan_function {
-    private static SimpleDateFormat f = new SimpleDateFormat("YYYY-MM-dd,HH:mm:ss.SS");
-
-    //限單一裝置
-    static ArrayList<Calendar> received_time_Calendar = new ArrayList<>();
-    static ArrayList<String> received_time = new ArrayList<>();
-    static ArrayList<Long> received_time_interval = new ArrayList<>();
-
-    static ArrayList<Integer> rssi_level_1 = new ArrayList<>();  //rssi>-70
-    static ArrayList<Integer> rssi_level_2 = new ArrayList<>();  //-70>rssi>-90
-    static ArrayList<Integer> rssi_level_3 = new ArrayList<>();  //rssi<-90
-
     static String name, phone, email, company, position, other;
-
 
     static ScanCallback leScanCallback = new ScanCallback() {
         @Override
@@ -68,36 +38,19 @@ public class Service_scan_function {
 
             received_data = received_data + received_data_rsp;
 
-//            Log.e(TAG,"received_data: "+hexToAscii(received_data));
-//            Log.e(TAG,"received_data1.length: "+received_data1.length());
-
 
             order = Array.getByte(Objects.requireNonNull(result.getScanRecord().getManufacturerSpecificData(0xffff)), 0);
             total = Array.getByte(Objects.requireNonNull(result.getScanRecord().getManufacturerSpecificData(0xffff)), 1);
             id = received_data.subSequence(2,12).toString();
-//            Log.e(TAG,"order: "+ order + " ; " + "total: " + total + " ; " + "id: " + id);
 
             received_data = received_data.subSequence(12,received_data.length()).toString();
 
 
 
-            Calendar a = Calendar.getInstance();
-            String currentTime = f.format(a.getTime());
 
             /*------------------------------------------------------------message-------------------------------------------------------------------------*/
             String msg;
 
-            result.getTimestampNanos();
-            msg="Device Name: " + result.getDevice().getName() +"\n"+ "rssi: " + result.getRssi() +"\n" + "add: " + result.getDevice().getAddress() +"\n"
-                    + "time: " + currentTime +"\n" + "data: " + received_data +"\n\n";
-
-
-
-//            // auto scroll for text view
-//            final int scrollAmount = peripheralTextView.getLayout().getLineTop(peripheralTextView.getLineCount()) - peripheralTextView.getHeight();
-//            // if there is no need to scroll, scrollAmount will be <=0
-//            if (scrollAmount > 0)
-//                peripheralTextView.scrollTo(0, scrollAmount);
 
             /*----------------------------------------------------------message END-----------------------------------------------------------------------*/
 
@@ -108,108 +61,15 @@ public class Service_scan_function {
 
             if(!list_device.contains(id)){
                 list_device.add(id);
-                list_device_detail.add(msg);
             }
 
-
-        /*
-        -----------|---------------------
-        address    |
-        -----------|---------------------
-        time_pre   |
-        -----------|---------------------
-        time_now   |
-        -----------|---------------------
-        interval   |
-        -----------|---------------------
-        num        |
-        -----------|---------------------
-        mean_total |
-        -----------|---------------------
-        mean       |
-        -----------|---------------------
-        */
-            int rssi = result.getRssi();
-            int level;
-            if(rssi>-70){
-                level = 1;
-            }else if(rssi>-90){
-                level = 2;
-            }else {
-                level = 3;
-            }
-
-            long TimestampMillis = result.getTimestampNanos()/1000000; //單位:ms
             final int index = list_device.indexOf(id);
-            int initial = 0;
-            if(matrix.get(0).size()<list_device.size()){
-                matrix.get(0).add(index);                 //address
-                matrix.get(1).add(initial);               //time_pre
-                matrix.get(2).add(TimestampMillis);       //time_now
-                matrix.get(3).add(initial);               //interval
-                matrix.get(4).add(num_total.get(index));  //num
-                matrix.get(5).add(mean_total.get(index));                  //mean_total
-                matrix.get(6).add(mean_total.get(index)/num_total.get(index));     //mean
-                time_previous.set(index,TimestampMillis);
-                num_total.set(index,num_total.get(index)+1);
-                mean_total.set(index,TimestampMillis-time_previous.get(index));
-                switch (level){
-                    case 1:
-                        rssi_level_1.add(1);
-                        rssi_level_2.add(0);
-                        rssi_level_3.add(0);
-                        break;
-                    case 2:
-                        rssi_level_1.add(0);
-                        rssi_level_2.add(1);
-                        rssi_level_3.add(0);
-                        break;
-                    case 3:
-                        rssi_level_1.add(0);
-                        rssi_level_2.add(0);
-                        rssi_level_3.add(1);
-                        break;
-                }
-            }else {
-                long interval = TimestampMillis-time_previous.get(index);
-//                Log.e(TAG, "interval:"+interval);
-//                Log.e(TAG, "time_previous:"+time_previous);
-                mean_total.set(index,mean_total.get(index)+interval);
-                matrix.get(1).set(index,time_previous.get(index));
-                matrix.get(2).set(index,TimestampMillis);
-                matrix.get(3).set(index,interval);
-                matrix.get(4).set(index,num_total.get(index));
-                matrix.get(5).set(index,mean_total.get(index));
-                matrix.get(6).set(index,mean_total.get(index)/num_total.get(index));
-                time_previous.set(index,TimestampMillis);
-                num_total.set(index,num_total.get(index)+1);
 
-                switch (level){
-                    case 1:
-                        int i = rssi_level_1.get(index);
-                        rssi_level_1.set(index,i+1);
-                        break;
-                    case 2:
-                        i = rssi_level_2.get(index);
-                        rssi_level_2.set(index,i+1);
-                        break;
-                    case 3:
-                        i = rssi_level_3.get(index);
-                        rssi_level_3.set(index,i+1);
-                        break;
-                }
-            }
-
-
-            //每個不同address的time interval
-            if(list_device.size()>time_interval.size()){  //list_device or imei
-                time_interval.add(new ArrayList<>());
-                num_time.add(new ArrayList<Long>());
+            if(list_device.size()>num_list.size()){
                 num_list.add(new ArrayList<Long>());
                 data_list.add(new ArrayList<String>());
             }
 
-            time_interval.get(index).add(matrix.get(3).get(index));
 
             //重組segmentation
             Log.e(TAG,"received_data.length: "+received_data.length());
@@ -254,63 +114,6 @@ public class Service_scan_function {
                     "You have received " + num_finish + " business card!\n";
             peripheralTextView.setText(msg);
 
-
-
-//            if(data_list.size() == num_finish){
-//                stop_int = stop_int + 1;
-//
-//                final int finalNum_finish = num_finish;
-//                if(stop_int == 1){
-//                    new Handler().postDelayed(new Runnable() {
-//                        public void run() {
-//                            if(data_list.size() == finalNum_finish ){
-//                                stopScanning();
-//                                data_list.get(index).remove("finish");
-//                            }else {
-//                                stop_int = 0;
-//                            }
-//                        }
-//                    }, 10000);   //10 seconds
-//                }
-//
-//            }
-
-//            Log.e(TAG,"data_list: "+data_list);
-
-
-//            num_list.get(index).set(order-1,result.getTimestampNanos()/1000000);
-//            if(num_list.get(index).size()==16 && !num_list.get(index).contains((long)0)){
-//                long max = Collections.max(num_list.get(index));
-//                long min = Collections.min(num_list.get(index));
-//                num_time.get(index).add(max-min);
-//                Log.e(TAG,"device: "+list_device.get(index));
-//                Log.e(TAG,"num_list: "+num_list.get(index));
-//                Log.e(TAG,"num_time: "+num_time.get(index));
-//            }
-
-
-
-
-//            Log.e(TAG,"matrix: "+"\n"
-//                    +matrix.get(0).toString()+"\n"
-//                    +matrix.get(1).toString()+"\n"
-//                    +matrix.get(2).toString()+"\n"
-//                    +matrix.get(3).toString()+"\n"
-//                    +matrix.get(4).toString()+"\n"
-//                    +matrix.get(5).toString()+"\n"
-//                    +matrix.get(6).toString()+"\n");
-
-            //單一裝置time interval
-            received_time_Calendar.add(a);
-            received_time_interval.clear();
-            for(int i = 0;i<received_time_Calendar.size();i++){
-                received_time.add(f.format(received_time_Calendar.get(i).getTime()));
-                if(i>0){
-                    received_time_interval.add(time_difference_(received_time_Calendar.get(i-1),received_time_Calendar.get(i)));
-                }
-            }
-//            Log.e(TAG,"received_time_interval.length: "+received_time_interval.size());
-//            Log.e(TAG,"received_time_interval"+received_time_interval);
 
             /*-------------------------------------------------------interval END--------------------------------------------------------------------------*/
 

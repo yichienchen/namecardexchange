@@ -3,10 +3,6 @@ package com.example.namecardexchange;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.AdvertiseCallback;
@@ -33,35 +29,25 @@ import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Random;
 import java.util.TreeMap;
 
 import static com.example.namecardexchange.DBHelper.TB1;
-import static com.example.namecardexchange.Service_Adv.Adv_data_seg;
-import static com.example.namecardexchange.Service_Adv.packet_num;
-import static com.example.namecardexchange.Service_Adv.pdu_len;
 
 public class MainActivity extends AppCompatActivity {
 
-    static int ManufacturerData_size = 24;  //ManufacturerData長度
-    static String TAG = "chien";
+    static String TAG = "lab605";
 
     public static byte[][] data_legacy;
-    public static byte[][] data_extended;
 
     public static String card;
 
-    static boolean version = true;  //true: 4.0 , false:5.0
-
-    static byte[] id_byte = new byte[4];
+    static byte[] id_byte = new byte[4];  //random id
 
 
     static List<String> list_device = new ArrayList<>();
@@ -97,16 +83,6 @@ public class MainActivity extends AppCompatActivity {
     static ImageButton name_card;
     public static TextView peripheralTextView;
 
-    private AppCompatButton deletee;
-
-    //    default mode: low power
-
-    static NotificationManager notificationManager;
-    static NotificationChannel mChannel;
-    Intent intentMainActivity;
-    static PendingIntent pendingIntent;
-    Notification notification;
-    static Intent received_id;
 
     Intent adv_service;
     Intent scan_service;
@@ -132,17 +108,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
         //TODO 回前頁會呼叫onDestroy
-//        notificationManager.notify(1000, notification);
         stopService(adv_service);
         stopService(scan_service);
-        Log.e(TAG, "onDestroy() called");
         super.onDestroy();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     public void onResume() {
         super.onResume();
-//        Log.e(TAG, "onResume() called");
         permission();
     }
 
@@ -167,9 +141,9 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-//        version = !mBluetoothAdapter.isLeExtendedAdvertisingSupported();
     }
 
+    //索取app需要的手機權限
     @RequiresApi(api = Build.VERSION_CODES.Q)
     public void permission() {
 //        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SYSTEM_ALERT_WINDOW) != PackageManager.PERMISSION_GRANTED) {
@@ -188,6 +162,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //設定元件(button textview 等等)
     private void element() {
         /*---------------------------------------scan-----------------------------------------*/
         startScanningButton = findViewById(R.id.StartScanButton);
@@ -240,25 +215,6 @@ public class MainActivity extends AppCompatActivity {
                                         }
                                     });
 
-
-//                                    new AlertDialog.Builder(MainActivity.this)
-//                                            .setTitle(card_list(db)[1][which])
-//                                            .setMessage(resultData)
-//                                            .setPositiveButton("close", new DialogInterface.OnClickListener() {
-//                                                @Override
-//                                                public void onClick(DialogInterface dialog, int w) {
-//
-//                                                }
-//                                            })
-//                                            .setNegativeButton("delete", new DialogInterface.OnClickListener() {
-//                                                @Override
-//                                                public void onClick(DialogInterface dialog, int w) {
-////                                                    Log.e(TAG,"刪掉");
-//                                                    delete(card_list(db)[0][which]);
-//                                                }
-//                                            })
-//                                            .show();
-
                                 }
                             })
                             .setPositiveButton("close", new DialogInterface.OnClickListener() {
@@ -272,17 +228,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
-//        scan_list.setOnClickListener(new View.OnClickListener() {
-//            public void onClick(View v) {
-//                final AlertDialog.Builder mBuilder = new AlertDialog.Builder(MainActivity.this);
-//                @SuppressLint("InflateParams") View mView = getLayoutInflater().inflate(R.layout.business_card,null);
-//                mBuilder.setView(mView);
-//                final AlertDialog dialog = mBuilder.create();
-//                dialog.show();
-//                Objects.requireNonNull(dialog.getWindow()).setLayout(1000,750);
-//            }
-//        });
 
 
         /*--------------------------------------advertise----------------------------------------*/
@@ -303,8 +248,6 @@ public class MainActivity extends AppCompatActivity {
         adv_service = new Intent(MainActivity.this, Service_Adv.class);
         scan_service = new Intent(MainActivity.this, Service_Scan.class);
 
-        /*-------------------------------------Receiver---------------------------------------*/
-        received_id = new Intent();
 
         /*--------------------------------------others----------------------------------------*/
         peripheralTextView = findViewById(R.id.PeripheralTextView);
@@ -393,6 +336,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //取得database中儲存的名片內容
     private static String[][] card_list(SQLiteDatabase db){
         Cursor cursor = db.query(TB1,new String[]{"_id","NAME","PHONE","EMAIL","COMPANY","POSITION","OTHER"},
                 null,null,null,null,null);
@@ -424,11 +368,13 @@ public class MainActivity extends AppCompatActivity {
         return list;
     }
 
+    //刪除名片
     public static void delete(String _id){
         SQLiteDatabase db = DH.getWritableDatabase();
         db.delete(TB1,"_id=?",new String[]{_id});
     }
 
+    //記住輸入的名片
     public void SharedPrefesSAVE(int type,String value){
         SharedPreferences prefs = getApplicationContext().getSharedPreferences("NAME",0);
         SharedPreferences.Editor prefEDIT = prefs.edit();

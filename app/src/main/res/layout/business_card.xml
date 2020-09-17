@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
 
         android:paddingStart="30dp"
-        android:paddingTop="10dp"
+        android:paddingTop="15dp"
         android:typeface="serif"
         android:textSize="15sp"
         android:textColor="#F4A460"
@@ -31,7 +31,7 @@
         android:paddingStart="30dp"
         android:layout_centerVertical="true"
         android:typeface="serif"
-        android:textSize="17sp"
+        android:textSize="20sp"
         android:textColor="#000000"
 
 
@@ -47,7 +47,7 @@
         android:paddingTop="35dp"
         android:layout_centerVertical="true"
         android:typeface="serif"
-        android:textSize="12sp"
+        android:textSize="15sp"
         android:textColor="#8A8A8A"
 
 
@@ -62,7 +62,7 @@
         android:paddingStart="170dp"
         android:layout_centerVertical="true"
         android:typeface="serif"
-        android:textSize="8sp"
+        android:textSize="12sp"
         android:textColor="#000000"
 
 
@@ -71,12 +71,16 @@
 
     <ImageButton
         android:id="@+id/deletee"
-        android:background="@null"
         android:layout_width="25dp"
-        android:layout_height="25dp"
+        android:layout_height="30dp"
         android:layout_alignParentEnd="true"
-        app:srcCompat="@drawable/delete"
-        android:contentDescription="TODO" />
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:background="@null"
+
+
+        android:contentDescription="TODO"
+        app:srcCompat="@drawable/delete" />
 
 
 </RelativeLayout>

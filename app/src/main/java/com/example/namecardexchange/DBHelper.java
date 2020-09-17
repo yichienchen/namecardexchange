@@ -4,6 +4,8 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+
+//建立SQLite database，儲存名片
 public class DBHelper extends SQLiteOpenHelper {
     final static String TB1="saves_card";
 
@@ -14,7 +16,6 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        //接觸史
         String SQL1 = "CREATE TABLE IF NOT EXISTS "+ TB1 +
                 "(_id INTEGER PRIMARY KEY AUTOINCREMENT , " +
                 "NAME TEXT NOT NULL, " +
